@@ -20,7 +20,7 @@
 
 ## Updates
 
-- 2025/06/04: YOLOv12's instance segmentation models are released, see [code]().
+- 2025/06/04: YOLOv12's instance segmentation models are released, see [code](https://github.com/sunsmarterjie/yolov12/tree/seg).
 
 - 2025/04/15: Pretrain a YOLOv12 model with [LightlyTrain](https://docs.lightly.ai/train/stable/index.html), a novel framework that lets you pretrain any computer vision model on your unlabeled data, with [YOLOv12 support](https://docs.lightly.ai/train/stable/models/yolov12.html). Here is also a [Colab tutorial](https://colab.research.google.com/github/lightly-ai/lightly-train/blob/main/examples/notebooks/yolov12.ipynb)!
 
