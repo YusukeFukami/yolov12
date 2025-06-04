@@ -73,6 +73,18 @@ YOLOv12 surpasses all popular real-time object detectors in accuracy with compet
 | [YOLO12l](https://github.com/sunsmarterjie/yolov12/releases/download/v1.0/yolov12l.pt) | 640                   | 53.7                 | 6.77                            | 26.4               | 88.9              |
 | [YOLO12x](https://github.com/sunsmarterjie/yolov12/releases/download/v1.0/yolov12x.pt) | 640                   | 55.2                 | 11.79                           | 59.1               | 199.0             |
 
+[**Instance segmentation**](https://github.com/sunsmarterjie/yolov12/tree/Seg):
+| Model                                                                               | size<br><sup>(pixels) | mAP<sup>box<br>50-95 | mAP<sup>mask<br>50-95 | Speed<br><sup>T4 TensorRT10<br>(ms) | params<br><sup>(M) | FLOPs<br><sup>(B) |
+| -------------------------------------------------------------------------------------------- | --------------------- |--------------------- | ------------------------------ | ----------------------------------- | ------------------ | ----------------- |
+| [YOLOv12n-seg](https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.pt) | 640                   | 38.9                 | 32.0                  | 1.8 ± 0.0                           | 2.9                | 10.4              |
+| [YOLOv12s-seg](https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s-seg.pt) | 640                   | 46.6                 | 37.8                  | 2.9 ± 0.0                           | 10.1               | 35.5              |
+| [YOLOv12m-seg](https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11m-seg.pt) | 640                   | 51.5                 | 41.5                  | 6.3 ± 0.1                           | 22.4               | 123.3             |
+| [YOLOv12l-seg](https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11l-seg.pt) | 640                   | 53.4                 | 42.9                  | 7.8 ± 0.2                           | 27.6               | 142.2             |
+| [YOLOv12x-seg](https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11x-seg.pt) | 640                   | 54.7                 | 43.8                  | 15.8 ± 0.7                          | 62.1               | 319.0             |
+
+</details>
+
+
 ## Installation
 ```
 wget https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu11torch2.2cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
