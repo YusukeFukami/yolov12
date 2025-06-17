@@ -20,7 +20,7 @@
 
 ## Updates
 
-- 2025/06/17: ** Use this repo for YOLOv12 instead of Ultralytics. The Ultralytics version is inefficient and has unstable training, which are fixed here.**
+- 2025/06/17: **Use this repo for YOLOv12 instead of Ultralytics. The Ultralytics version is inefficient and has unstable training, which are fixed here.**
 
 - 2025/06/04: YOLOv12's **instance segmentation** models are released, see [code](https://github.com/sunsmarterjie/yolov12/tree/Seg).
 
