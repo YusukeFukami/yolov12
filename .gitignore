@@ -25,3 +25,5 @@ runs/
 .*.swp
 .*.swo
 *~
+*.pt
+*.pth
