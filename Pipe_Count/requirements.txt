@@ -1,26 +1,35 @@
 # Streamlit Cloud用 requirements.txt
-# YOLOv12変換モデル対応版
+# OpenCV問題解決版
 
 # 基本フレームワーク
 streamlit
 
-# YOLO関連
-ultralytics>=8.0.180
+# OpenCV（最重要：バージョン固定）
+opencv-python-headless==4.8.1.78
+
+# 数値計算（OpenCV依存のため先に）
+numpy==1.24.3
 
 # 画像処理
-opencv-python-headless
-Pillow
+Pillow==10.0.1
 
-# 数値計算
-numpy>=1.24.0
+# PyTorch（安定版・OpenCV互換）
+torch==2.0.1
+torchvision==0.15.2
+
+# YOLO関連（依存関係解決後）
+ultralytics==8.0.196
 
 # ファイルダウンロード
-gdown
-
-# PyTorch（Streamlit Cloudで自動インストール）
-torch>=2.0.0
-torchvision>=0.15.0
+gdown==4.7.1
 
 # その他
-PyYAML
-scipy
+PyYAML==6.0.1
+scipy==1.11.4
+
+# Ultralytics追加依存関係（重要）
+lapx>=0.5.2
+matplotlib>=3.3.0
+pandas>=1.1.4
+seaborn>=0.11.0
+tqdm>=4.64.0
