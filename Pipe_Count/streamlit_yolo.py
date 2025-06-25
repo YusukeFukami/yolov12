@@ -87,33 +87,62 @@ else:
     # デフォルトのFile ID
     file_id = "1-HPCm10U8CvnZrGvwaIsHp61ueYK1D5I"
 
+# モデル管理
+st.sidebar.markdown("### 🔧 モデル管理")
+if st.sidebar.button("🗑️ キャッシュをクリア", help="既存のモデルファイルを削除して再ダウンロード"):
+    model_path = "pipe_detection_model.pt"
+    if os.path.exists(model_path):
+        os.remove(model_path)
+        st.sidebar.success("✅ キャッシュをクリアしました")
+        st.rerun()
+    else:
+        st.sidebar.info("キャッシュは既に空です")
+
+# デバッグモード
+st.sidebar.markdown("### 🔍 デバッグ設定")
+debug_mode = st.sidebar.checkbox("デバッグモード", value=True, help="詳細な推論情報を表示")
+
 # 推論設定
 st.sidebar.markdown("### 🎯 推論パラメータ")
+
+# より細かい信頼度設定
 confidence_threshold = st.sidebar.slider(
     "信頼度閾値", 
-    min_value=0.1, 
+    min_value=0.01, 
     max_value=1.0, 
-    value=0.25, 
-    step=0.05,
-    help="この値以上の信頼度のオブジェクトのみ表示"
+    value=0.15, 
+    step=0.01,
+    help="検出の最小信頼度（低い値でより多く検出）"
 )
 
 max_detections = st.sidebar.slider(
     "最大検出数", 
     min_value=1, 
-    max_value=100, 
-    value=50,
+    max_value=300, 
+    value=100,
     help="検出するオブジェクトの最大数"
 )
 
 iou_threshold = st.sidebar.slider(
-    "IoU閾値（重複除去）", 
+    "IoU閾値（NMS）", 
     min_value=0.1, 
     max_value=1.0, 
-    value=0.45, 
+    value=0.5, 
     step=0.05,
-    help="重複検出を除去するための閾値"
+    help="Non-Maximum Suppressionの閾値"
 )
+
+# 追加の推論パラメータ
+st.sidebar.markdown("### 🔧 詳細設定")
+imgsz = st.sidebar.selectbox(
+    "推論画像サイズ",
+    options=[320, 416, 512, 640, 768, 1024],
+    index=3,
+    help="モデルの入力画像サイズ"
+)
+
+augment = st.sidebar.checkbox("推論時データ拡張", value=False, help="TTA (Test Time Augmentation)")
+agnostic_nms = st.sidebar.checkbox("クラス非依存NMS", value=False, help="異なるクラス間でもNMSを適用")
 
 # 表示設定
 st.sidebar.markdown("### 🎨 表示設定")
@@ -136,6 +165,7 @@ def load_pipe_detection_model(file_id):
         # ダウンロード
         if not os.path.exists(model_path):
             st.info("🔄 パイプ検出モデルをダウンロード中...")
+            st.write(f"File ID: {file_id}")
             url = f"https://drive.google.com/uc?id={file_id}"
             
             with st.spinner("ダウンロード中..."):
@@ -149,24 +179,62 @@ def load_pipe_detection_model(file_id):
                 return None
         else:
             st.info("📂 既存のモデルファイルを使用")
+            st.warning("⚠️ 既存ファイルが正しいモデルか確認してください。違う場合は「キャッシュをクリア」してください。")
         
         # モデル読み込み
         st.info("🤖 パイプ検出モデルを読み込み中...")
         model = YOLO(model_path)
         st.success("✅ モデル読み込み完了！")
         
-        # モデル情報表示
-        with st.expander("📋 モデル情報", expanded=False):
-            if hasattr(model, 'names'):
-                class_names = list(model.names.values())
-                if class_names == ['0', '1']:
-                    st.write("**検出クラス:** パイプ")
-                    st.write("**モデルタイプ:** YOLOv12 → YOLOv8変換済み")
-                else:
-                    st.write(f"**検出クラス:** {class_names}")
+        # モデル検証
+        is_pipe_model = False
+        if hasattr(model, 'names'):
+            class_names = model.names
+            # パイプ検出モデルの確認（クラス数が2で、0と1のみ）
+            if len(class_names) == 2 and 0 in class_names and 1 in class_names:
+                is_pipe_model = True
+        
+        # 詳細なモデル情報表示
+        with st.expander("📋 モデル詳細情報", expanded=True):
+            if is_pipe_model:
+                st.success("✅ パイプ検出モデルが正しくロードされました！")
+                st.write("### モデル構造")
+                st.write("**モデルタイプ:** カスタムパイプ検出（YOLOv12→YOLOv8変換済み）")
+                st.write("**クラスマッピング:**")
+                st.write("- クラス0: 背景")
+                st.write("- クラス1: パイプ")
+            else:
+                st.error("❌ 期待されたパイプ検出モデルではありません！")
+                st.write("### 問題の詳細")
+                st.write(f"**検出されたクラス数:** {len(class_names) if hasattr(model, 'names') else 'N/A'}")
+                if hasattr(model, 'names') and len(class_names) <= 10:
+                    st.write(f"**クラス一覧:** {list(class_names.values())}")
+                elif hasattr(model, 'names'):
+                    st.write(f"**クラス例:** {list(class_names.values())[:10]}...")
+                
+                st.warning("""
+                ### 🔧 解決方法:
+                1. サイドバーの「キャッシュをクリア」ボタンを押す
+                2. 正しいGoogle Drive File IDを確認
+                3. アプリを再読み込み
+                """)
             
+            # 共通情報
+            st.write("### ファイル情報")
             st.write(f"**モデルファイル:** {model_path}")
             st.write(f"**ファイルサイズ:** {os.path.getsize(model_path) / (1024 * 1024):.1f}MB")
+            st.write(f"**File ID:** {file_id}")
+            
+            # 詳細なクラス情報
+            if hasattr(model, 'names'):
+                st.write("### 詳細なクラス情報")
+                for idx, name in class_names.items():
+                    st.write(f"- インデックス {idx}: {name}")
+        
+        # パイプモデルでない場合は警告
+        if not is_pipe_model:
+            st.error("⚠️ 標準YOLOモデルがロードされています。パイプ検出には適していません。")
+            return None
         
         return model
         
@@ -288,8 +356,34 @@ st.markdown("---")
 model = load_pipe_detection_model(file_id)
 
 if model is None:
-    st.error("❌ モデルが読み込まれていません")
-    st.info("💡 サイドバーでFile IDを確認してください")
+    st.error("❌ 正しいパイプ検出モデルがロードされていません")
+    st.info("""
+    ### 🔧 対処方法：
+    1. **キャッシュをクリア** - サイドバーの「キャッシュをクリア」ボタンを押す
+    2. **File IDを確認** - 正しいパイプ検出モデルのFile IDか確認
+    3. **ページを再読み込み** - ブラウザをリフレッシュ
+    
+    ### 📝 期待されるモデル仕様：
+    - クラス数: 2（0: 背景、1: パイプ）
+    - モデルタイプ: YOLOv12からYOLOv8形式に変換済み
+    - ファイルサイズ: 約6-25MB
+    """)
+    
+    # デバッグ用の手動File ID入力
+    st.markdown("### 🔍 デバッグ用")
+    manual_file_id = st.text_input(
+        "手動でFile IDを入力:",
+        placeholder="例: 1-HPCm10U8CvnZrGvwaIsHp61ueYK1D5I",
+        help="正しいパイプ検出モデルのFile IDを入力してください"
+    )
+    
+    if manual_file_id and st.button("🔄 手動でロード"):
+        # キャッシュをクリア
+        model_path = "pipe_detection_model.pt"
+        if os.path.exists(model_path):
+            os.remove(model_path)
+        # 新しいFile IDでリロード
+        st.rerun()
 else:
     st.session_state.model_loaded = True
     
@@ -342,14 +436,43 @@ else:
                     try:
                         image = Image.open(uploaded_file)
                         
-                        # 推論実行
+                        # デバッグ情報
+                        if debug_mode:
+                            st.info(f"🔍 デバッグ情報 - {uploaded_file.name}")
+                            st.write(f"- 画像サイズ: {image.size}")
+                            st.write(f"- 画像モード: {image.mode}")
+                        
+                        # 推論実行（詳細パラメータ付き）
                         results = model(
                             image,
                             conf=confidence_threshold,
                             iou=iou_threshold,
                             max_det=max_detections,
-                            verbose=False
+                            imgsz=imgsz,
+                            augment=augment,
+                            agnostic_nms=agnostic_nms,
+                            verbose=debug_mode
                         )
+                        
+                        # デバッグ：生の推論結果
+                        if debug_mode:
+                            st.write("### 🔍 推論結果の詳細")
+                            if results[0].boxes is not None:
+                                st.write(f"- 検出数（フィルタ前）: {len(results[0].boxes)}")
+                                st.write(f"- 信頼度範囲: {results[0].boxes.conf.min():.3f} - {results[0].boxes.conf.max():.3f}")
+                                
+                                # 全検出の詳細
+                                for idx, box in enumerate(results[0].boxes[:5]):  # 最初の5つ
+                                    st.write(f"  検出{idx+1}: conf={box.conf.item():.3f}, cls={box.cls.item()}")
+                            else:
+                                st.write("- 検出なし")
+                            
+                            # モデルの推論設定確認
+                            st.write("### ⚙️ 使用された推論設定")
+                            st.write(f"- conf: {confidence_threshold}")
+                            st.write(f"- iou: {iou_threshold}")
+                            st.write(f"- imgsz: {imgsz}")
+                            st.write(f"- max_det: {max_detections}")
                         
                         all_results.append({
                             'file_name': uploaded_file.name,
@@ -405,6 +528,13 @@ else:
                     col1, col2 = st.columns(2)
                     with col1:
                         st.image(image, caption=f"元画像: {uploaded_file.name}", use_container_width=True)
+                        
+                        # デバッグ情報
+                        if debug_mode:
+                            st.info("🔍 画像情報")
+                            st.write(f"- サイズ: {image.size}")
+                            st.write(f"- モード: {image.mode}")
+                            st.write(f"- フォーマット: {image.format if hasattr(image, 'format') else 'N/A'}")
                     
                     # 推論実行
                     with st.spinner("🔍 パイプを検出中..."):
@@ -413,8 +543,37 @@ else:
                             conf=confidence_threshold,
                             iou=iou_threshold,
                             max_det=max_detections,
-                            verbose=False
+                            imgsz=imgsz,
+                            augment=augment,
+                            agnostic_nms=agnostic_nms,
+                            verbose=debug_mode
                         )
+                    
+                    # デバッグ情報の表示
+                    if debug_mode:
+                        with col2:
+                            st.info("🔍 推論結果の詳細")
+                            if results[0].boxes is not None:
+                                boxes = results[0].boxes
+                                st.write(f"**総検出数:** {len(boxes)}")
+                                
+                                # 信頼度の分布
+                                conf_values = boxes.conf.cpu().numpy()
+                                st.write(f"**信頼度統計:**")
+                                st.write(f"- 最小: {conf_values.min():.3f}")
+                                st.write(f"- 最大: {conf_values.max():.3f}")
+                                st.write(f"- 平均: {conf_values.mean():.3f}")
+                                
+                                # クラス分布
+                                cls_values = boxes.cls.cpu().numpy()
+                                unique_cls, counts = np.unique(cls_values, return_counts=True)
+                                st.write("**クラス別検出数:**")
+                                for cls, count in zip(unique_cls, counts):
+                                    cls_name = model.names[int(cls)]
+                                    st.write(f"- {cls_name}: {count}個")
+                            else:
+                                st.write("検出なし")
+                                st.write("💡 信頼度閾値を下げてみてください")
                     
                     # 結果表示
                     st.markdown("---")
