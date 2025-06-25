@@ -44,3 +44,14 @@ __pycache__/
 # Environment
 .env
 .venv/
+
+# Large model files
+Pipe_Count/*.pt
+Pipe_Count/*.pth
+Pipe_Count/my_trained_model.pt
+
+# Large model files
+Pipe_Count/*.pt
+Pipe_Count/*.pth
+*.pt
+*.pth
