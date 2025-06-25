@@ -27,3 +27,20 @@ runs/
 *~
 *.pt
 *.pth
+# Model files
+*.pt
+*.pth
+*.weights
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+.venv/
