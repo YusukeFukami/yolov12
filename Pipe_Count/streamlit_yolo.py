@@ -21,7 +21,7 @@ def download_model():
         st.info("学習済みモデルをダウンロード中...")
         
         # Google DriveのファイルID（要設定）
-        file_id = "YOUR_GOOGLE_DRIVE_FILE_ID"
+        file_id = "1VXTGRI_-s5l-JlBVmjZL1NbC2eWH7C9m"
         url = f"https://drive.google.com/uc?id={file_id}"
         
         try:
