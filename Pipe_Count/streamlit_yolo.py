@@ -4,190 +4,182 @@
 import streamlit as st
 import os
 import sys
+import subprocess
 
-# OpenCVインポート前の環境設定
-os.environ['OPENCV_IO_ENABLE_OPENEXR'] = '0'
-
-# エラーハンドリング付きインポート
-try:
-    from PIL import Image
-    import numpy as np
-    import gdown
-    import json
-    from datetime import datetime
-    import io
-    
-    # Ultralytics YOLOのインポート
-    from ultralytics import YOLO
-    YOLO_AVAILABLE = True
-    
-except ImportError as e:
-    YOLO_AVAILABLE = False
-    error_msg = str(e)
-
-# ページ設定
+# ページ設定（最初に実行）
 st.set_page_config(
     page_title="パイプ検出アプリ",
     page_icon="🔧",
     layout="wide"
 )
 
-st.title("🔧 パイプ検出システム")
-st.markdown("カスタムYOLOv12モデルによるパイプ検出")
+st.title("🔧 パイプ検出システム - デバッグ版")
 
-# エラーチェック
-if not YOLO_AVAILABLE:
-    st.error("❌ システムエラー：必要なライブラリがロードできません")
-    st.markdown("""
-    ### 🔧 解決方法:
-    
-    1. **packages.txt** ファイルを作成して以下を追加:
-    ```
-    libgl1-mesa-glx
-    libglib2.0-0
-    libsm6
-    libxext6
-    libxrender-dev
-    libgomp1
-    ```
-    
-    2. **requirements.txt** を確認
-    
-    3. **Streamlit Cloud** でアプリを再デプロイ
-    """)
-    st.stop()
+# システム情報表示
+st.markdown("### 🔍 システム診断")
 
-# 設定
-DEFAULT_FILE_ID = "1-HPCm10U8CvnZrGvwaIsHp61ueYK1D5I"  # カスタムモデルのFile ID
+# パッケージ確認
+st.write("**Python バージョン:**", sys.version)
+st.write("**作業ディレクトリ:**", os.getcwd())
 
-# サイドバー
-st.sidebar.title("⚙️ 設定")
-
-# モデル設定
-file_id = st.sidebar.text_input(
-    "Google Drive File ID",
-    value=DEFAULT_FILE_ID,
-    help="カスタムパイプ検出モデルのFile ID"
-)
-
-# 推論パラメータ
-confidence = st.sidebar.slider("信頼度閾値", 0.01, 1.0, 0.25, 0.01)
-iou = st.sidebar.slider("IoU閾値", 0.1, 1.0, 0.45, 0.05)
-
-# キャッシュクリア
-if st.sidebar.button("🗑️ モデルキャッシュをクリア"):
-    if os.path.exists("model.pt"):
-        os.remove("model.pt")
-        st.sidebar.success("キャッシュをクリアしました")
-        st.rerun()
-
-@st.cache_resource
-def load_model(file_id):
-    """モデルをロード"""
-    model_path = "model.pt"
-    
+# インストール済みパッケージ確認
+with st.expander("📦 インストール済みパッケージ"):
     try:
-        # ダウンロード
-        if not os.path.exists(model_path):
-            with st.spinner("モデルをダウンロード中..."):
-                url = f"https://drive.google.com/uc?id={file_id}"
-                gdown.download(url, model_path, quiet=False)
-                
-                if not os.path.exists(model_path):
-                    st.error("ダウンロード失敗")
-                    return None
-                
-                st.success(f"ダウンロード完了: {os.path.getsize(model_path)/1024/1024:.1f}MB")
-        
-        # モデル読み込み
-        with st.spinner("モデルを読み込み中..."):
-            model = YOLO(model_path)
-            
-        # モデル検証
-        if hasattr(model, 'names'):
-            names = model.names
-            if len(names) == 2 and 0 in names and 1 in names:
-                st.success("✅ パイプ検出モデル読み込み完了")
-                st.info(f"クラス: {names}")
-                return model
-            else:
-                st.error(f"❌ 期待と異なるモデル（クラス数: {len(names)}）")
-                st.write(f"検出されたクラス: {list(names.values())[:10]}...")
-                return None
-        
-        return model
-        
+        result = subprocess.run(['pip', 'list'], capture_output=True, text=True)
+        st.text(result.stdout)
     except Exception as e:
-        st.error(f"モデル読み込みエラー: {e}")
-        return None
+        st.error(f"パッケージリスト取得エラー: {e}")
 
-# メイン処理
+# ライブラリの存在確認
+with st.expander("📚 システムライブラリ確認"):
+    libs_to_check = [
+        '/usr/lib/x86_64-linux-gnu/libGL.so.1',
+        '/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0',
+        '/usr/lib/x86_64-linux-gnu/libSM.so.6',
+        '/usr/lib/x86_64-linux-gnu/libXext.so.6',
+        '/usr/lib/x86_64-linux-gnu/libXrender.so.1'
+    ]
+    
+    for lib in libs_to_check:
+        if os.path.exists(lib):
+            st.success(f"✅ {lib}")
+        else:
+            st.error(f"❌ {lib} - 見つかりません")
+
+# 環境変数設定
+os.environ['OPENCV_IO_ENABLE_OPENEXR'] = '0'
+
+# 段階的インポートテスト
+st.markdown("### 🧪 ライブラリインポートテスト")
+
+import_status = {}
+
+# 1. 基本ライブラリ
+try:
+    import numpy as np
+    import_status['numpy'] = f"✅ バージョン: {np.__version__}"
+except Exception as e:
+    import_status['numpy'] = f"❌ エラー: {str(e)}"
+
+try:
+    from PIL import Image
+    import_status['PIL'] = "✅ 成功"
+except Exception as e:
+    import_status['PIL'] = f"❌ エラー: {str(e)}"
+
+# 2. OpenCV
+try:
+    import cv2
+    import_status['OpenCV'] = f"✅ バージョン: {cv2.__version__}"
+except Exception as e:
+    import_status['OpenCV'] = f"❌ エラー: {str(e)}"
+
+# 3. PyTorch
+try:
+    import torch
+    import_status['PyTorch'] = f"✅ バージョン: {torch.__version__}"
+except Exception as e:
+    import_status['PyTorch'] = f"❌ エラー: {str(e)}"
+
+# 4. Ultralytics
+try:
+    import ultralytics
+    import_status['Ultralytics'] = f"✅ バージョン: {ultralytics.__version__}"
+except Exception as e:
+    import_status['Ultralytics'] = f"❌ エラー: {str(e)}"
+
+# 5. YOLO
+try:
+    from ultralytics import YOLO
+    import_status['YOLO'] = "✅ インポート成功"
+    YOLO_AVAILABLE = True
+except Exception as e:
+    import_status['YOLO'] = f"❌ エラー: {str(e)}"
+    YOLO_AVAILABLE = False
+
+# インポート結果表示
+for lib, status in import_status.items():
+    if "✅" in status:
+        st.success(f"{lib}: {status}")
+    else:
+        st.error(f"{lib}: {status}")
+
+# ファイル確認
+st.markdown("### 📄 設定ファイル確認")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.write("**packages.txt:**")
+    if os.path.exists("packages.txt"):
+        with open("packages.txt", "r") as f:
+            st.code(f.read())
+    else:
+        st.error("packages.txt が見つかりません")
+
+with col2:
+    st.write("**requirements.txt:**")
+    if os.path.exists("requirements.txt"):
+        with open("requirements.txt", "r") as f:
+            st.code(f.read()[:500] + "...")  # 最初の500文字
+    else:
+        st.error("requirements.txt が見つかりません")
+
+# 解決策提案
 st.markdown("---")
+st.markdown("### 💡 推奨される解決策")
 
-# モデル読み込み
-model = load_model(file_id)
-
-if model is None:
-    st.error("モデルが正しくロードされていません")
-    st.info("File IDを確認し、キャッシュをクリアしてから再試行してください")
-else:
-    # ファイルアップロード
-    uploaded_file = st.file_uploader(
-        "画像をアップロード",
-        type=['png', 'jpg', 'jpeg'],
-        help="パイプが写った画像を選択"
-    )
+if not YOLO_AVAILABLE:
+    st.error("YOLOのインポートに失敗しています")
     
-    if uploaded_file:
-        # 画像読み込み
-        image = Image.open(uploaded_file)
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.subheader("元画像")
-            st.image(image, use_container_width=True)
-        
-        # 検出実行
-        if st.button("🔍 検出実行", type="primary"):
-            with st.spinner("検出中..."):
-                try:
-                    # 推論
-                    results = model(image, conf=confidence, iou=iou)
-                    
-                    # 結果表示
-                    with col2:
-                        st.subheader("検出結果")
-                        
-                        # アノテーション付き画像
-                        annotated = results[0].plot()
-                        st.image(annotated, use_container_width=True)
-                        
-                        # 検出数
-                        if results[0].boxes is not None:
-                            num_detections = len(results[0].boxes)
-                            st.metric("検出数", num_detections)
-                            
-                            # 詳細
-                            for i, box in enumerate(results[0].boxes):
-                                conf = box.conf.item()
-                                st.write(f"パイプ #{i+1}: 信頼度 {conf:.2%}")
-                        else:
-                            st.info("検出されませんでした")
-                            
-                except Exception as e:
-                    st.error(f"検出エラー: {e}")
-
-# 使用方法
-with st.expander("📚 使用方法"):
     st.markdown("""
-    ### 基本的な使い方
-    1. 画像をアップロード
-    2. 必要に応じて信頼度閾値を調整
-    3. 「検出実行」ボタンをクリック
+    ### 🔧 Streamlit Cloud での対処法:
     
-    ### トラブルシューティング
-    - **検出されない場合**: 信頼度閾値を下げる（0.1〜0.2）
-    - **誤検出が多い場合**: 信頼度閾値を上げる（0.5以上）
-    - **モデルエラー**: キャッシュをクリアして再ロード
+    1. **アプリの完全な再デプロイ**
+       - Streamlit Cloud のダッシュボードでアプリを削除
+       - 新規にアプリを作成してデプロイ
+    
+    2. **リソース制限の確認**
+       - Streamlit Cloud の無料プランはメモリ制限あり
+       - PyTorch + YOLO は大量のメモリを使用
+    
+    3. **代替案：軽量版の使用**
+       - `torch` の代わりに `torch-cpu` を使用
+       - より小さいYOLOモデル（yolov8n）を使用
     """)
+    
+    # より軽量なrequirements.txtの提案
+    st.markdown("### 📝 軽量版 requirements.txt の提案:")
+    st.code("""
+# 基本
+streamlit
+numpy==1.24.3
+opencv-python-headless==4.8.1.78
+Pillow==10.0.1
+
+# PyTorch CPU版（軽量）
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
+
+# YOLO
+ultralytics==8.0.196
+
+# 必須依存関係
+gdown==4.7.1
+PyYAML==6.0.1
+matplotlib==3.7.2
+pandas==2.0.3
+    """)
+else:
+    st.success("✅ すべてのライブラリが正常にインポートされました！")
+    
+    # 簡単なテスト
+    if st.button("🧪 YOLOモデルロードテスト"):
+        try:
+            with st.spinner("テスト中..."):
+                model = YOLO('yolov8n.pt')  # 最小モデルでテスト
+                st.success("✅ YOLOモデルのロードに成功！")
+                st.write(f"モデルクラス数: {len(model.names)}")
+        except Exception as e:
+            st.error(f"モデルロードエラー: {e}")
