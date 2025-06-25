@@ -1,10 +1,26 @@
+# Streamlit Cloud用 requirements.txt
+# YOLOv12変換モデル対応版
+
+# 基本フレームワーク
 streamlit
-ultralytics>=8.1.0
-gdown
-torch>=2.0.0
-torchvision>=0.15.0
+
+# YOLO関連
+ultralytics>=8.0.180
+
+# 画像処理
 opencv-python-headless
 Pillow
+
+# 数値計算
 numpy>=1.24.0
+
+# ファイルダウンロード
+gdown
+
+# PyTorch（Streamlit Cloudで自動インストール）
+torch>=2.0.0
+torchvision>=0.15.0
+
+# その他
 PyYAML
 scipy
