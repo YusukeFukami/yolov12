@@ -1,17 +1,4 @@
-#streamlit
+streamlit
 numpy==1.24.3
 Pillow==10.0.1
 opencv-python-headless==4.8.1.78
-
-# PyTorch CPU版
---index-url https://download.pytorch.org/whl/cpu
-torch==2.0.1+cpu
-torchvision==0.15.2+cpu
-
-# YOLO
-ultralytics==8.0.196
-
-# 最小限の依存関係
-gdown==4.7.1
-matplotlib==3.7.2
-PyYAML==6.0.1
