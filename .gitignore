@@ -1,0 +1,27 @@
+# Python キャッシュ
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+ultralytics.egg-info/
+
+# YOLO学習結果（runsフォルダー）
+runs/
+
+# ルートディレクトリの大きな.ptファイル（Pipe_Count内は除外しない）
+/yolov12*.pt
+/flash_attn-*.whl
+
+# Windows互換ファイル
+*:Zone.Identifier
+
+# 一時ファイル
+/1
+/11
+/3
+
+# vim一時ファイル
+.*.swp
+.*.swo
+*~
