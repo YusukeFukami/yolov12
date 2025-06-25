@@ -1,19 +1,9 @@
-# Streamlit Cloud専用 (CPU環境)
 streamlit
 ultralytics
 gdown
-
-# PyTorch CPU版のみ
-torch==2.2.2+cpu
-torchvision==0.17.2+cpu
---extra-index-url https://download.pytorch.org/whl/cpu
-
-# 画像処理
+torch
+torchvision
 opencv-python-headless
 Pillow
 numpy
-
-# その他
 PyYAML
-scipy
-psutil
